@@ -1361,12 +1361,7 @@ function formatFecha(fecha) {
 // DASHBOARD
 // ============================================================
 function irDashboard() {
-  mostrarPantalla('p-dashboard');
-  document.getElementById('header-sub').textContent = 'Tableros';
-  document.getElementById('header-titulo').textContent = '';
-  var btn = document.getElementById('btn-cambiar');
-  btn.textContent = '← Volver';
-  btn.style.display = 'block';
+  window.open('https://lookerstudio.google.com/reporting/5b86ff9d-02ac-4396-9c8f-a97f64fff38a/page/L6MsF', '_blank');
 }
 
 function volverDesdeDashboard() {
