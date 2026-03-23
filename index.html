@@ -283,6 +283,7 @@
   <div id="banner-problemas-lista"></div>
   <div id="contenedor-lista"><div class="loader">Cargando...</div></div>
   <button class="btn-primario" onclick="abrirFormulario(null)" style="margin-top:4px;">+ Agregar actividad</button>
+  <button id="btn-dashboard-lista" onclick="irDashboard()" style="display:none;width:100%;padding:13px;background:white;color:#1a1a2e;border:2px solid #1a1a2e;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:10px;">📊 Tableros</button>
 </div>
 
 <!-- PANTALLA 3 - FORM -->
@@ -387,7 +388,24 @@
     <button class="btn-primario" onclick="abrirModalMaquina(null)" style="margin-bottom:14px;">+ Nueva máquina</button>
     <div id="tabla-maquinas"><div class="loader">Cargando...</div></div>
   </div>
-  <button class="btn-secundario" onclick="doLogout()" style="margin-top:20px;color:#c0392b;border-color:#c0392b;">Salir →</button>
+  <button class="btn-primario" onclick="irDashboard()" style="margin-top:14px;">📊 Ver Tableros</button>
+  <button class="btn-secundario" onclick="doLogout()" style="margin-top:10px;color:#c0392b;border-color:#c0392b;">Salir →</button>
+</div>
+
+<!-- PANTALLA DASHBOARD -->
+<div class="pantalla" id="p-dashboard">
+  <div style="font-size:13px;color:#aaa;margin-bottom:10px;text-align:center;">
+    Los gráficos se actualizan automáticamente con los datos del sistema.
+  </div>
+  <div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.07);background:white;">
+    <iframe
+      src="https://lookerstudio.google.com/embed/reporting/5b86ff9d-02ac-4396-9c8f-a97f64fff38a/page/L6MsF"
+      style="width:100%;height:75vh;border:none;"
+      allowfullscreen
+      sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
+    </iframe>
+  </div>
+  <button class="btn-secundario" onclick="volverDesdeDashboard()" style="margin-top:14px;">← Volver</button>
 </div>
 
 <script>
@@ -601,6 +619,8 @@ function btnCambiarClick() {
   var activa = document.querySelector('.pantalla.activa').id;
   if (activa === 'p-form' || activa === 'p-incompletos') {
     irLista();
+  } else if (activa === 'p-dashboard') {
+    volverDesdeDashboard();
   } else if (activa === 'p-admin') {
     var sel = document.getElementById('admin-op-sel');
     if (sel.options.length > 0) { E.operario = sel.options[0].value; sel.value = E.operario; }
@@ -648,6 +668,9 @@ function irLista() {
   document.getElementById('lista-fecha').value = E.fecha;
   document.getElementById('header-sub').textContent = formatFecha(E.fecha);
   document.getElementById('header-titulo').textContent = E.rol === 'admin' ? E.operario : E.usuarioNombre;
+  // Mostrar botón dashboard solo para admin
+  var btnDash = document.getElementById('btn-dashboard-lista');
+  if (btnDash) btnDash.style.display = E.rol === 'admin' ? 'block' : 'none';
   cargarRegistros();
 }
 
@@ -1331,6 +1354,27 @@ function formatFecha(fecha) {
   var dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   var d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
   return dias[d.getDay()] + ' ' + p[2] + '/' + p[1] + '/' + p[0];
+}
+
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function irDashboard() {
+  mostrarPantalla('p-dashboard');
+  document.getElementById('header-sub').textContent = 'Tableros';
+  document.getElementById('header-titulo').textContent = '';
+  var btn = document.getElementById('btn-cambiar');
+  btn.textContent = '← Volver';
+  btn.style.display = 'block';
+}
+
+function volverDesdeDashboard() {
+  if (E.rol === 'admin') {
+    irAdmin();
+  } else {
+    irLista();
+  }
 }
 
 // Registrar Service Worker
