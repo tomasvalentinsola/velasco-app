@@ -10,7 +10,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Velasco App">
 <link rel="apple-touch-icon" href="icon-192.png">
-
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #f0f2f5; min-height: 100vh; }
@@ -67,6 +66,11 @@
     font-weight: bold; cursor: pointer; margin-top: 10px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner-circulo {
+    width: 48px; height: 48px; border: 5px solid rgba(255,255,255,0.3);
+    border-top-color: white; border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+  }
   .modal-overlay {
     display: none; position: fixed; top: 0; left: 0;
     width: 100%; height: 100%; background: rgba(0,0,0,0.5);
@@ -98,6 +102,7 @@
   .badge-t-MA { background: #fadbd8; color: #922b21; }
   .badge-t-DE { background: #f2f3f4; color: #717d7e; }
   .badge-t-OT { background: #e8daef; color: #6c3483; }
+  .badge-t-RD { background: #d4efdf; color: #1a5276; }
   .fecha-row {
     display: flex; align-items: center; gap: 10px;
     background: white; border-radius: 12px; padding: 12px 16px;
@@ -123,15 +128,14 @@
   }
   .incompleto-fecha { font-size: 15px; font-weight: bold; color: #1a1a2e; }
   .incompleto-problemas { font-size: 12px; color: #e74c3c; margin-top: 5px; line-height: 1.5; }
-  .btn-ver-dia {
-    padding: 8px 14px; background: white; color: #1a1a2e; border: 2px solid #1a1a2e;
-    border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: bold; white-space: nowrap;
-  }
+  .btn-ver-dia { padding: 8px 14px; background: white; color: #1a1a2e; border: 2px solid #1a1a2e; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: bold; white-space: nowrap; }
   .separador { border: none; border-top: 2px solid #f0f0f0; margin: 14px 0; }
   .campo-condicional { display: none; }
   .campo-condicional.visible { display: block; }
-  .ultimo-box { border: 2px solid #f39c12; border-radius: 10px; padding: 14px; background: #fffbf0; }
-  .ultimo-box label { color: #935116; }
+  .ultimo-box {
+    border: 2px solid #f39c12; border-radius: 10px;
+    padding: 14px; background: #fffbf0; margin-bottom: 14px;
+  }
   .retrabajo-box { border: 2px solid #e74c3c; border-radius: 10px; padding: 14px; background: #fdf5f5; }
   .retrabajo-box h2 { color: #922b21; }
   .loader { text-align: center; padding: 30px; color: #aaa; font-size: 14px; }
@@ -155,12 +159,10 @@
 </head>
 <body>
 
-<!-- SPINNER GLOBAL -->
-<div class="modal-overlay" id="spinner-overlay">
+<!-- SPINNER -->
+<div class="modal-overlay" id="spinner-overlay" style="z-index:2000;">
   <div style="text-align:center;">
-    <div style="width:48px;height:48px;border:5px solid rgba(255,255,255,0.3);
-                border-top-color:white;border-radius:50%;
-                animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+    <div class="spinner-circulo"></div>
     <div id="spinner-msg" style="color:white;font-size:15px;font-weight:bold;"></div>
   </div>
 </div>
@@ -295,9 +297,11 @@
       <div><label>Hora de inicio</label><input type="time" id="f-hora-inicio"></div>
     </div>
   </div>
+
   <div class="card">
     <h2>Actividad</h2>
     <div class="grid-3">
+      <button class="sel-btn" onclick="selAct(this,'RD')"><span class="cod">RD</span>Relev. y Diseño</button>
       <button class="sel-btn" onclick="selAct(this,'PR')"><span class="cod">PR</span>Programando</button>
       <button class="sel-btn" onclick="selAct(this,'SE')"><span class="cod">SE</span>Seteando</button>
       <button class="sel-btn" onclick="selAct(this,'OP')"><span class="cod">OP</span>Operando</button>
@@ -306,6 +310,7 @@
       <button class="sel-btn" onclick="selAct(this,'OT')"><span class="cod">OT</span>Otra</button>
     </div>
   </div>
+
   <div class="card" id="card-maquina">
     <h2>Máquina</h2>
     <div id="maquinas-grid" class="grid-2"></div>
@@ -325,6 +330,7 @@
       </div>
     </div>
   </div>
+
   <div class="card">
     <h2>Datos del pedido <span style="font-weight:normal;font-size:12px;color:#aaa;">(opcional)</span></h2>
     <div class="campo-row">
@@ -334,6 +340,8 @@
     <label>Observaciones</label>
     <textarea id="f-observaciones" rows="2" placeholder="Observaciones..." style="resize:none;"></textarea>
   </div>
+
+  <!-- RETRABAJO -->
   <div class="card retrabajo-box" id="card-retrabajo" style="display:none;">
     <button class="motivo-btn" id="btn-retrabajo" onclick="selRetrabajo(this)">⚠️ Es un retrabajo</button>
     <div class="campo-condicional" id="campo-motivo-retrabajo" style="margin-top:14px;">
@@ -347,17 +355,18 @@
       </div>
     </div>
   </div>
+
+  <!-- ÚLTIMA ACTIVIDAD — toggle igual que retrabajo -->
   <div class="card ultimo-box" id="card-ultimo">
-    <h2>¿Es la última actividad del día?</h2>
-    <div class="grid-2">
-      <button class="sel-btn" onclick="selUltimo(this, true)"><span class="cod">✅</span>Sí, me voy</button>
-      <button class="sel-btn" onclick="selUltimo(this, false)"><span class="cod">➕</span>No, hay más</button>
-    </div>
-    <div class="campo-condicional" id="campo-hora-salida" style="margin-top:12px;">
-      <label>Hora de salida</label>
+    <button class="motivo-btn" id="btn-ultimo" onclick="selUltimo(this)" style="border-color:#f39c12;color:#935116;">
+      🏁 Es la última actividad del día
+    </button>
+    <div class="campo-condicional" id="campo-hora-salida" style="margin-top:14px;">
+      <label style="color:#935116;">Hora de salida</label>
       <input type="time" id="f-hora-salida">
     </div>
   </div>
+
   <button class="btn-primario" id="btn-guardar" onclick="guardar()">✔ Guardar</button>
   <button class="btn-secundario" onclick="irLista()">← Volver sin guardar</button>
   <button class="btn-eliminar-form" id="btn-eliminar-form" onclick="eliminarDesdeForm()" style="display:none;">🗑️ Eliminar este registro</button>
@@ -392,24 +401,9 @@
   <button class="btn-secundario" onclick="doLogout()" style="margin-top:10px;color:#c0392b;border-color:#c0392b;">Salir →</button>
 </div>
 
-<!-- PANTALLA DASHBOARD -->
-<div class="pantalla" id="p-dashboard">
-  <div style="font-size:13px;color:#aaa;margin-bottom:10px;text-align:center;">
-    Los gráficos se actualizan automáticamente con los datos del sistema.
-  </div>
-  <div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.07);background:white;">
-    <iframe
-      src="https://lookerstudio.google.com/embed/reporting/5b86ff9d-02ac-4396-9c8f-a97f64fff38a/page/L6MsF"
-      style="width:100%;height:75vh;border:none;"
-      allowfullscreen
-      sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
-    </iframe>
-  </div>
-  <button class="btn-secundario" onclick="volverDesdeDashboard()" style="margin-top:14px;">← Volver</button>
-</div>
-
 <script>
 var API_URL = 'https://script.google.com/macros/s/AKfycbw09wteLTRgju1Pldg_NtftwWJK8BVCmwWmwJHbIDX22038ZGfrKrQYaD9EJAiMnDo4hA/exec';
+var LOOKER_URL = 'https://lookerstudio.google.com/reporting/5b86ff9d-02ac-4396-9c8f-a97f64fff38a/page/L6MsF';
 var CACHE_KEY_DATOS = 'velasco_datos_iniciales';
 var CACHE_TTL = 60 * 60 * 1000;
 
@@ -417,7 +411,7 @@ var E = {
   usuarioId: '', usuarioNombre: '', rol: '',
   operario: '', fecha: '',
   actividad: '', maquina: '', maquinaAutomatico: false,
-  automatico: null, esUltimo: null,
+  automatico: null, esUltimo: false,
   retrabajo: false, motivoRetrabajo: '',
   editandoId: null,
   maquinas: [],
@@ -444,17 +438,12 @@ function ocultarSpinner() {
 }
 function mensajeSpinner(action) {
   var m = {
-    'login':             'Ingresando...',
-    'cambiarContrasena': 'Guardando contraseña...',
-    'getDatosLista':     'Cargando registros...',
-    'guardarRegistro':   'Guardando...',
-    'eliminarRegistro':  'Eliminando...',
-    'validarRegistro':   'Verificando...',
-    'getDatosAdmin':     'Cargando...',
-    'guardarUsuario':    'Guardando...',
-    'eliminarUsuario':   'Eliminando...',
-    'guardarMaquina':    'Guardando...',
-    'eliminarMaquina':   'Desactivando...'
+    'login': 'Ingresando...', 'cambiarContrasena': 'Guardando contraseña...',
+    'getDatosLista': 'Cargando registros...', 'guardarRegistro': 'Guardando...',
+    'eliminarRegistro': 'Eliminando...', 'validarRegistro': 'Verificando...',
+    'getDatosAdmin': 'Cargando...', 'guardarUsuario': 'Guardando...',
+    'eliminarUsuario': 'Eliminando...', 'guardarMaquina': 'Guardando...',
+    'eliminarMaquina': 'Desactivando...'
   };
   return m[action] || 'Procesando...';
 }
@@ -474,10 +463,7 @@ function api(action, args, silencioso) {
     if (!r.success && r.error) throw new Error(r.error);
     return r.data !== undefined ? r.data : r;
   })
-  .catch(function(e) {
-    if (!silencioso) ocultarSpinner();
-    throw e;
-  });
+  .catch(function(e) { if (!silencioso) ocultarSpinner(); throw e; });
 }
 
 // ============================================================
@@ -500,7 +486,7 @@ function invalidarCache() {
 }
 
 // ============================================================
-// MODAL MENSAJE
+// MODAL
 // ============================================================
 function mostrarModal(msg) {
   document.getElementById('modal-msg').textContent = msg;
@@ -524,22 +510,15 @@ window.onload = function() {
   E.fecha = hoy.getFullYear() + '-' +
     String(hoy.getMonth()+1).padStart(2,'0') + '-' +
     String(hoy.getDate()).padStart(2,'0');
-
   var cached = leerCache();
-  if (cached) {
-    poblarSelectUsuarios(cached.usuarios);
-    E.maquinas = cached.maquinas || [];
-  }
-
+  if (cached) { poblarSelectUsuarios(cached.usuarios); E.maquinas = cached.maquinas || []; }
   api('getDatosIniciales', [], true)
     .then(function(datos) {
       guardarCache(datos);
       poblarSelectUsuarios(datos.usuarios);
       E.maquinas = datos.maquinas || [];
     })
-    .catch(function(e) {
-      if (!cached) mostrarModal('Error al cargar: ' + e.message);
-    });
+    .catch(function(e) { if (!cached) mostrarModal('Error al cargar: ' + e.message); });
 };
 
 function poblarSelectUsuarios(usuarios) {
@@ -560,7 +539,6 @@ function doLogin() {
   var password = document.getElementById('sel-password').value;
   if (!nombre) { mostrarError('login', 'Seleccioná tu nombre'); return; }
   ocultarError('login');
-
   api('login', [nombre, password])
     .then(function(res) {
       if (!res.success) { mostrarError('login', res.mensaje); return; }
@@ -572,13 +550,11 @@ function doLogin() {
         document.getElementById('cc-nueva').value = '';
         document.getElementById('cc-confirmar').value = '';
         ocultarError('cc');
-        mostrarPantalla('p-cambiar-clave');
-        actualizarHeaderBtn();
+        mostrarPantalla('p-cambiar-clave'); actualizarHeaderBtn();
       } else if (res.rol === 'admin') {
         irAdmin();
       } else {
-        E.operario = res.nombre;
-        irLista();
+        E.operario = res.nombre; irLista();
       }
     })
     .catch(function(e) { mostrarError('login', 'Error: ' + e.message); });
@@ -608,8 +584,7 @@ function doLogout() {
   document.getElementById('header-titulo').textContent = '';
   document.getElementById('header-sub').textContent = 'Actividades CNC';
   document.getElementById('btn-cambiar').style.display = 'none';
-  ocultarError('login');
-  mostrarPantalla('p-login');
+  ocultarError('login'); mostrarPantalla('p-login');
 }
 
 // ============================================================
@@ -619,8 +594,6 @@ function btnCambiarClick() {
   var activa = document.querySelector('.pantalla.activa').id;
   if (activa === 'p-form' || activa === 'p-incompletos') {
     irLista();
-  } else if (activa === 'p-dashboard') {
-    volverDesdeDashboard();
   } else if (activa === 'p-admin') {
     var sel = document.getElementById('admin-op-sel');
     if (sel.options.length > 0) { E.operario = sel.options[0].value; sel.value = E.operario; }
@@ -646,8 +619,7 @@ function actualizarHeaderBtn() {
 // LISTA
 // ============================================================
 function irLista() {
-  mostrarPantalla('p-lista');
-  actualizarHeaderBtn();
+  mostrarPantalla('p-lista'); actualizarHeaderBtn();
   var adminRow = document.getElementById('admin-op-sel');
   if (E.rol === 'admin') {
     adminRow.style.display = 'block';
@@ -668,7 +640,6 @@ function irLista() {
   document.getElementById('lista-fecha').value = E.fecha;
   document.getElementById('header-sub').textContent = formatFecha(E.fecha);
   document.getElementById('header-titulo').textContent = E.rol === 'admin' ? E.operario : E.usuarioNombre;
-  // Mostrar botón dashboard solo para admin
   var btnDash = document.getElementById('btn-dashboard-lista');
   if (btnDash) btnDash.style.display = E.rol === 'admin' ? 'block' : 'none';
   cargarRegistros();
@@ -684,8 +655,7 @@ function cambiarFecha(fecha) {
   if (!fecha) return;
   E.fecha = fecha;
   document.getElementById('header-sub').textContent = formatFecha(fecha);
-  mostrarBannerProblemas();
-  cargarRegistros();
+  mostrarBannerProblemas(); cargarRegistros();
 }
 
 function cambiarFechaForm(fecha) {
@@ -700,9 +670,7 @@ function actualizarBtnIncompletos() {
   if (dias.length > 0) {
     btn.style.display = 'block';
     document.getElementById('cant-incompletos').textContent = dias.length;
-  } else {
-    btn.style.display = 'none';
-  }
+  } else { btn.style.display = 'none'; }
 }
 
 function mostrarBannerProblemas() {
@@ -721,16 +689,13 @@ function mostrarBannerProblemas() {
 function cargarRegistros() {
   if (!E.operario) return;
   var seq = ++listaSeq;
-  var opActual = E.operario;
-  var fechaActual = E.fecha;
-
+  var opActual = E.operario; var fechaActual = E.fecha;
   api('getDatosLista', [opActual, fechaActual])
     .then(function(datos) {
       if (seq !== listaSeq) return;
       E.diasIncompletos = datos.incompletos;
       E.registrosEnMemoria = datos.registros;
-      actualizarBtnIncompletos();
-      mostrarBannerProblemas();
+      actualizarBtnIncompletos(); mostrarBannerProblemas();
       renderizarLista(datos.registros);
     })
     .catch(function(e) {
@@ -741,8 +706,7 @@ function cargarRegistros() {
 }
 
 function irIncompletos() {
-  mostrarPantalla('p-incompletos');
-  actualizarHeaderBtn();
+  mostrarPantalla('p-incompletos'); actualizarHeaderBtn();
   renderizarIncompletos(E.diasIncompletos || []);
 }
 
@@ -770,13 +734,12 @@ function renderizarLista(registros) {
   var c = document.getElementById('contenedor-lista');
   c.innerHTML = '';
   var totalMin = 0, resumenMaqs = {};
-
   registros.forEach(function(reg, idx) {
     var horaFinCalc = reg.horaFin || (registros[idx + 1] ? registros[idx + 1].horaInicio : null);
     var durMin = horaFinCalc ? diffMinutos(reg.horaInicio, horaFinCalc) : 0;
     if (durMin > 0) {
       totalMin += durMin;
-      if (['SE','OP','PR'].indexOf(reg.actividad) >= 0 && reg.maquina && reg.maquina !== 'OTRA' && reg.maquina !== 'N/A') {
+      if (['SE','OP','PR','RD'].indexOf(reg.actividad) >= 0 && reg.maquina && reg.maquina !== 'OTRA' && reg.maquina !== 'N/A') {
         var maqMin = durMin;
         if (reg.automatico === 'Sí' && reg.horaFinMaquina) {
           var h = reg.horaFinMaquina.length > 5 ? reg.horaFinMaquina.substring(11,16) : reg.horaFinMaquina;
@@ -786,7 +749,6 @@ function renderizarLista(registros) {
       }
     }
   });
-
   var headerHTML = '<div class="card" style="margin-bottom:10px;"><div style="font-size:13px;color:#aaa;margin-bottom:8px;">' +
     registros.length + ' actividad' + (registros.length !== 1 ? 'es' : '') + ' · ' + minAHora(totalMin) + ' total</div>';
   if (Object.keys(resumenMaqs).length > 0) {
@@ -798,19 +760,16 @@ function renderizarLista(registros) {
   }
   headerHTML += '</div>';
   c.innerHTML = headerHTML;
-
   if (registros.length === 0) {
     c.innerHTML += '<div class="card"><div class="sin-registros">📭 Sin registros para este día.<br>Tocá el botón para agregar.</div></div>';
     return;
   }
-
   var wrap = document.createElement('div');
   wrap.className = 'tabla-wrap';
   var tabla = document.createElement('table');
   tabla.className = 'tabla-actividades';
   tabla.innerHTML = '<thead><tr><th>Inicio</th><th>Fin</th><th>Act.</th><th>Máquina</th><th>Pedido</th><th>Pieza</th><th>Fin Maq.</th><th></th></tr></thead>';
   var tbody = document.createElement('tbody');
-
   registros.forEach(function(reg, idx) {
     var horaFinCalc = reg.horaFin || (registros[idx + 1] ? registros[idx + 1].horaInicio : null);
     var finMaqTexto = '-';
@@ -819,7 +778,6 @@ function renderizarLista(registros) {
     if (reg.automatico === 'Sí') iconos += '<span title="Automático">🤖</span>';
     if (reg.retrabajo === 'Sí') iconos += '<span title="Retrabajo">⚠️</span>';
     if (reg.horaFin) iconos += '<span title="Último del día">🏁</span>';
-
     var tr = document.createElement('tr');
     tr.innerHTML =
       '<td><strong>' + reg.horaInicio + '</strong></td>' +
@@ -833,10 +791,7 @@ function renderizarLista(registros) {
     tr.onclick = function() { abrirFormulario(reg.id); };
     tbody.appendChild(tr);
   });
-
-  tabla.appendChild(tbody);
-  wrap.appendChild(tabla);
-  c.appendChild(wrap);
+  tabla.appendChild(tbody); wrap.appendChild(tabla); c.appendChild(wrap);
 }
 
 // ============================================================
@@ -856,19 +811,16 @@ function renderMaquinas() {
 }
 
 function abrirFormulario(id) {
-  limpiarFormulario();
-  renderMaquinas();
+  limpiarFormulario(); renderMaquinas();
   E.editandoId = id;
   document.getElementById('f-fecha').value = E.fecha;
   var btnElim = document.getElementById('btn-eliminar-form');
-
   if (id) {
     btnElim.style.display = 'block';
     document.getElementById('form-titulo').textContent = 'Editar actividad';
     var reg = E.registrosEnMemoria.find(function(r) { return r.id === id; });
-    if (reg) {
-      precargarFormulario(reg);
-    } else {
+    if (reg) { precargarFormulario(reg); }
+    else {
       api('getRegistros', [E.operario, E.fecha])
         .then(function(regs) {
           var r = regs.find(function(x) { return x.id === id; });
@@ -883,8 +835,7 @@ function abrirFormulario(id) {
     document.getElementById('f-hora-inicio').value =
       String(ahora.getHours()).padStart(2,'0') + ':' + String(ahora.getMinutes()).padStart(2,'0');
   }
-  mostrarPantalla('p-form');
-  actualizarHeaderBtn();
+  mostrarPantalla('p-form'); actualizarHeaderBtn();
 }
 
 function eliminarDesdeForm() {
@@ -900,7 +851,6 @@ function precargarFormulario(reg) {
   document.getElementById('f-pedido').value         = reg.pedido || '';
   document.getElementById('f-pieza').value          = reg.pieza || '';
   document.getElementById('f-observaciones').value  = reg.observaciones || '';
-
   if (reg.horaFinMaquina && reg.horaFinMaquina.length > 5) {
     document.getElementById('f-fecha-fin-maquina').value = reg.horaFinMaquina.substring(0, 10);
     document.getElementById('f-hora-fin-maquina').value  = reg.horaFinMaquina.substring(11, 16);
@@ -909,19 +859,18 @@ function precargarFormulario(reg) {
     document.getElementById('f-hora-fin-maquina').value  = reg.horaFinMaquina || '';
   }
 
-  var btnsU = document.querySelectorAll('#card-ultimo .sel-btn');
+  // Última actividad — precargar si tiene horaFin
   if (reg.horaFin) {
     document.getElementById('f-hora-salida').value = reg.horaFin;
-    E.esUltimo = true; btnsU[0].classList.add('activo');
+    E.esUltimo = true;
+    document.getElementById('btn-ultimo').classList.add('activo');
     document.getElementById('campo-hora-salida').classList.add('visible');
-  } else {
-    E.esUltimo = false; btnsU[1].classList.add('activo');
   }
 
   if (reg.actividad) {
     E.actividad = reg.actividad;
     var btnsA = document.querySelectorAll('#p-form .grid-3 .sel-btn');
-    var actMap = {'PR':0,'SE':1,'OP':2,'MA':3,'DE':4,'OT':5};
+    var actMap = {'RD':0,'PR':1,'SE':2,'OP':3,'MA':4,'DE':5,'OT':6};
     if (actMap[reg.actividad] !== undefined) btnsA[actMap[reg.actividad]].classList.add('activo');
     if (reg.actividad === 'DE') {
       document.getElementById('card-retrabajo').style.display = 'none';
@@ -932,7 +881,6 @@ function precargarFormulario(reg) {
       if (reg.actividad !== 'MA') document.getElementById('card-retrabajo').style.display = 'block';
     }
   }
-
   if (reg.maquina && reg.maquina !== 'N/A') {
     E.maquina = reg.maquina;
     var maqData = E.maquinas.find(function(m) { return m.nombre === reg.maquina; });
@@ -942,7 +890,6 @@ function precargarFormulario(reg) {
     });
     if (reg.actividad === 'OP') mostrarCampoAuto(E.maquinaAutomatico);
   }
-
   if (reg.automatico === 'Sí') {
     E.automatico = true;
     document.querySelectorAll('#campo-automatico .sel-btn')[0].classList.add('activo');
@@ -952,7 +899,6 @@ function precargarFormulario(reg) {
     var b2 = document.querySelectorAll('#campo-automatico .sel-btn');
     if (b2[1]) b2[1].classList.add('activo');
   }
-
   if (reg.retrabajo === 'Sí') {
     E.retrabajo = true;
     document.getElementById('btn-retrabajo').classList.add('activo');
@@ -968,7 +914,8 @@ function precargarFormulario(reg) {
 
 function limpiarFormulario() {
   E.actividad = ''; E.maquina = ''; E.maquinaAutomatico = false;
-  E.automatico = null; E.esUltimo = null; E.retrabajo = false; E.motivoRetrabajo = '';
+  E.automatico = null; E.esUltimo = false;
+  E.retrabajo = false; E.motivoRetrabajo = '';
   document.querySelectorAll('.sel-btn').forEach(function(b) { b.classList.remove('activo'); });
   document.querySelectorAll('.motivo-btn').forEach(function(b) { b.classList.remove('activo'); });
   ['f-hora-inicio','f-pedido','f-pieza','f-observaciones',
@@ -981,6 +928,7 @@ function limpiarFormulario() {
   document.getElementById('card-retrabajo').style.display = 'none';
   document.getElementById('campo-motivo-retrabajo').classList.remove('visible');
   document.getElementById('card-maquina').style.display = 'block';
+  document.getElementById('btn-ultimo').classList.remove('activo');
 }
 
 function selAct(btn, cod) {
@@ -1027,9 +975,8 @@ function selMaq(btn, maqNombre, esAutomatico) {
 
 function mostrarCampoAuto(esAutomatico) {
   var campo = document.getElementById('campo-automatico');
-  if (esAutomatico && E.actividad === 'OP') {
-    campo.classList.add('visible');
-  } else {
+  if (esAutomatico && E.actividad === 'OP') campo.classList.add('visible');
+  else {
     campo.classList.remove('visible');
     document.getElementById('campo-hora-fin-maq').classList.remove('visible');
     document.getElementById('f-hora-fin-maquina').value = '';
@@ -1056,11 +1003,12 @@ function selAuto(btn, esAuto) {
   }
 }
 
-function selUltimo(btn, esUltimo) {
-  document.querySelectorAll('#card-ultimo .sel-btn').forEach(function(b) { b.classList.remove('activo'); });
-  btn.classList.add('activo'); E.esUltimo = esUltimo;
+// Última actividad — funciona igual que retrabajo (toggle)
+function selUltimo(btn) {
+  E.esUltimo = !E.esUltimo;
+  btn.classList.toggle('activo', E.esUltimo);
   var campo = document.getElementById('campo-hora-salida');
-  if (esUltimo) campo.classList.add('visible');
+  if (E.esUltimo) campo.classList.add('visible');
   else { campo.classList.remove('visible'); document.getElementById('f-hora-salida').value = ''; }
 }
 
@@ -1091,11 +1039,9 @@ function guardar() {
     if (!horaFin) { mostrarModal('Completá la hora de salida'); return; }
   }
   if (E.retrabajo && !E.motivoRetrabajo) { mostrarModal('Seleccioná el motivo del retrabajo'); return; }
-
   var fechaFinMaq = document.getElementById('f-fecha-fin-maquina').value;
   var horaFinMaq  = document.getElementById('f-hora-fin-maquina').value;
   var horaFinMaquina = horaFinMaq ? (fechaFinMaq ? fechaFinMaq + ' ' + horaFinMaq : horaFinMaq) : '';
-
   var registro = {
     id: E.editandoId || '', fecha: E.fecha, operario: E.operario,
     horaInicio: horaInicio, horaFin: horaFin,
@@ -1108,7 +1054,6 @@ function guardar() {
     retrabajo:      E.retrabajo ? 'Sí' : 'No',
     motivoRetrabajo: E.motivoRetrabajo || ''
   };
-
   api('validarRegistro', [registro])
     .then(function(resultado) {
       if (!resultado.valido) { mostrarModal(resultado.mensaje); return Promise.reject('invalid'); }
@@ -1126,11 +1071,17 @@ function guardar() {
 }
 
 // ============================================================
+// DASHBOARD
+// ============================================================
+function irDashboard() {
+  window.open(LOOKER_URL, '_blank');
+}
+
+// ============================================================
 // ADMIN
 // ============================================================
 function irAdmin() {
-  mostrarPantalla('p-admin');
-  actualizarHeaderBtn();
+  mostrarPantalla('p-admin'); actualizarHeaderBtn();
   document.getElementById('header-sub').textContent = 'Panel de administración';
   document.getElementById('header-titulo').textContent = 'Admin';
   cargarDatosAdmin();
@@ -1356,23 +1307,7 @@ function formatFecha(fecha) {
   return dias[d.getDay()] + ' ' + p[2] + '/' + p[1] + '/' + p[0];
 }
 
-
-// ============================================================
-// DASHBOARD
-// ============================================================
-function irDashboard() {
-  window.open('https://lookerstudio.google.com/reporting/5b86ff9d-02ac-4396-9c8f-a97f64fff38a/page/L6MsF', '_blank');
-}
-
-function volverDesdeDashboard() {
-  if (E.rol === 'admin') {
-    irAdmin();
-  } else {
-    irLista();
-  }
-}
-
-// Registrar Service Worker
+// Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('/service-worker.js')
