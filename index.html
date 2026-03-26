@@ -132,12 +132,10 @@
   .separador { border: none; border-top: 2px solid #f0f0f0; margin: 14px 0; }
   .campo-condicional { display: none; }
   .campo-condicional.visible { display: block; }
-  .ultimo-box {
-    border: 2px solid #f39c12; border-radius: 10px;
-    padding: 14px; background: #fffbf0; margin-bottom: 14px;
-  }
+  .ultimo-box { border: 2px solid #f39c12; border-radius: 10px; padding: 14px; background: #fffbf0; margin-bottom: 14px; }
   .retrabajo-box { border: 2px solid #e74c3c; border-radius: 10px; padding: 14px; background: #fdf5f5; }
   .retrabajo-box h2 { color: #922b21; }
+  .auto-box { border: 2px solid #2980b9; border-radius: 10px; padding: 14px; background: #eaf4fb; margin-bottom: 14px; }
   .loader { text-align: center; padding: 30px; color: #aaa; font-size: 14px; }
   .aviso { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; }
   .campo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -314,19 +312,18 @@
   <div class="card" id="card-maquina">
     <h2>Máquina</h2>
     <div id="maquinas-grid" class="grid-2"></div>
-    <div class="campo-condicional" id="campo-automatico">
-      <hr class="separador">
-      <label>¿Proceso automático?</label>
-      <div class="grid-2">
-        <button class="sel-btn" onclick="selAuto(this, true)"><span class="cod">🤖</span>Sí — queda sola</button>
-        <button class="sel-btn" onclick="selAuto(this, false)"><span class="cod">👨‍🔧</span>No — op. presente</button>
-      </div>
-      <div class="campo-condicional" id="campo-hora-fin-maq" style="margin-top:12px;">
-        <label>Fecha y hora en que terminó la máquina <span style="font-weight:normal;color:#aaa;">(completar cuando termine)</span></label>
-        <div class="campo-row">
-          <div><input type="date" id="f-fecha-fin-maquina"></div>
-          <div><input type="time" id="f-hora-fin-maquina"></div>
-        </div>
+  </div>
+
+  <!-- AUTOMÁTICO — toggle, solo visible si la máquina lo permite y actividad es OP -->
+  <div class="auto-box campo-condicional" id="card-automatico">
+    <button class="motivo-btn" id="btn-automatico" onclick="selAutomatico(this)" style="border-color:#2980b9;color:#1a5276;">
+      🤖 Proceso automático — la máquina queda sola
+    </button>
+    <div class="campo-condicional" id="campo-hora-fin-maq" style="margin-top:14px;">
+      <label style="color:#1a5276;">Fecha y hora en que terminó la máquina <span style="font-weight:normal;color:#aaa;">(completar cuando termine)</span></label>
+      <div class="campo-row" style="margin-top:8px;">
+        <div><input type="date" id="f-fecha-fin-maquina"></div>
+        <div><input type="time" id="f-hora-fin-maquina"></div>
       </div>
     </div>
   </div>
@@ -356,7 +353,7 @@
     </div>
   </div>
 
-  <!-- ÚLTIMA ACTIVIDAD — toggle igual que retrabajo -->
+  <!-- ÚLTIMA ACTIVIDAD -->
   <div class="card ultimo-box" id="card-ultimo">
     <button class="motivo-btn" id="btn-ultimo" onclick="selUltimo(this)" style="border-color:#f39c12;color:#935116;">
       🏁 Es la última actividad del día
@@ -411,7 +408,7 @@ var E = {
   usuarioId: '', usuarioNombre: '', rol: '',
   operario: '', fecha: '',
   actividad: '', maquina: '', maquinaAutomatico: false,
-  automatico: null, esUltimo: false,
+  automatico: false, esUltimo: false,
   retrabajo: false, motivoRetrabajo: '',
   editandoId: null,
   maquinas: [],
@@ -859,7 +856,7 @@ function precargarFormulario(reg) {
     document.getElementById('f-hora-fin-maquina').value  = reg.horaFinMaquina || '';
   }
 
-  // Última actividad — precargar si tiene horaFin
+  // Última actividad
   if (reg.horaFin) {
     document.getElementById('f-hora-salida').value = reg.horaFin;
     E.esUltimo = true;
@@ -875,12 +872,14 @@ function precargarFormulario(reg) {
     if (reg.actividad === 'DE') {
       document.getElementById('card-retrabajo').style.display = 'none';
       document.getElementById('card-maquina').style.display = 'none';
+      document.getElementById('card-automatico').classList.remove('visible');
       E.maquina = 'N/A';
     } else {
       document.getElementById('card-maquina').style.display = 'block';
       if (reg.actividad !== 'MA') document.getElementById('card-retrabajo').style.display = 'block';
     }
   }
+
   if (reg.maquina && reg.maquina !== 'N/A') {
     E.maquina = reg.maquina;
     var maqData = E.maquinas.find(function(m) { return m.nombre === reg.maquina; });
@@ -888,17 +887,19 @@ function precargarFormulario(reg) {
     document.querySelectorAll('#maquinas-grid .sel-btn').forEach(function(b) {
       if (b.getAttribute('data-maq') === reg.maquina) b.classList.add('activo');
     });
-    if (reg.actividad === 'OP') mostrarCampoAuto(E.maquinaAutomatico);
+    // Mostrar card automático si corresponde
+    if (reg.actividad === 'OP' && E.maquinaAutomatico) {
+      document.getElementById('card-automatico').classList.add('visible');
+    }
   }
+
+  // Precargar estado automático
   if (reg.automatico === 'Sí') {
     E.automatico = true;
-    document.querySelectorAll('#campo-automatico .sel-btn')[0].classList.add('activo');
+    document.getElementById('btn-automatico').classList.add('activo');
     document.getElementById('campo-hora-fin-maq').classList.add('visible');
-  } else if (reg.automatico === 'No') {
-    E.automatico = false;
-    var b2 = document.querySelectorAll('#campo-automatico .sel-btn');
-    if (b2[1]) b2[1].classList.add('activo');
   }
+
   if (reg.retrabajo === 'Sí') {
     E.retrabajo = true;
     document.getElementById('btn-retrabajo').classList.add('activo');
@@ -914,7 +915,7 @@ function precargarFormulario(reg) {
 
 function limpiarFormulario() {
   E.actividad = ''; E.maquina = ''; E.maquinaAutomatico = false;
-  E.automatico = null; E.esUltimo = false;
+  E.automatico = false; E.esUltimo = false;
   E.retrabajo = false; E.motivoRetrabajo = '';
   document.querySelectorAll('.sel-btn').forEach(function(b) { b.classList.remove('activo'); });
   document.querySelectorAll('.motivo-btn').forEach(function(b) { b.classList.remove('activo'); });
@@ -922,13 +923,14 @@ function limpiarFormulario() {
    'f-hora-fin-maquina','f-fecha-fin-maquina','f-hora-salida'].forEach(function(id) {
     document.getElementById(id).value = '';
   });
-  document.getElementById('campo-automatico').classList.remove('visible');
+  document.getElementById('card-automatico').classList.remove('visible');
   document.getElementById('campo-hora-fin-maq').classList.remove('visible');
   document.getElementById('campo-hora-salida').classList.remove('visible');
   document.getElementById('card-retrabajo').style.display = 'none';
   document.getElementById('campo-motivo-retrabajo').classList.remove('visible');
   document.getElementById('card-maquina').style.display = 'block';
   document.getElementById('btn-ultimo').classList.remove('activo');
+  document.getElementById('btn-automatico').classList.remove('activo');
 }
 
 function selAct(btn, cod) {
@@ -936,32 +938,37 @@ function selAct(btn, cod) {
   btn.classList.add('activo'); E.actividad = cod;
   var cardRetrabajo = document.getElementById('card-retrabajo');
   var cardMaquina   = document.getElementById('card-maquina');
+  var cardAuto      = document.getElementById('card-automatico');
   if (cod === 'DE') {
     cardRetrabajo.style.display = 'none'; cardMaquina.style.display = 'none';
+    cardAuto.classList.remove('visible');
     E.retrabajo = false; E.motivoRetrabajo = '';
     document.getElementById('btn-retrabajo').classList.remove('activo');
     document.querySelectorAll('.motivo-btn').forEach(function(b) { b.classList.remove('activo'); });
     document.getElementById('campo-motivo-retrabajo').classList.remove('visible');
     document.querySelectorAll('#maquinas-grid .sel-btn').forEach(function(b) { b.classList.remove('activo'); });
-    document.getElementById('campo-automatico').classList.remove('visible');
     document.getElementById('campo-hora-fin-maq').classList.remove('visible');
+    document.getElementById('btn-automatico').classList.remove('activo');
     E.maquina = 'N/A'; E.automatico = false;
   } else if (cod === 'MA') {
     cardRetrabajo.style.display = 'none'; cardMaquina.style.display = 'block';
+    cardAuto.classList.remove('visible');
     E.retrabajo = false; E.motivoRetrabajo = '';
     document.getElementById('btn-retrabajo').classList.remove('activo');
     document.getElementById('campo-motivo-retrabajo').classList.remove('visible');
-    if (E.maquina === 'N/A') E.maquina = '';
-    document.getElementById('campo-automatico').classList.remove('visible');
+    document.getElementById('btn-automatico').classList.remove('activo');
     document.getElementById('campo-hora-fin-maq').classList.remove('visible');
+    if (E.maquina === 'N/A') E.maquina = '';
     E.automatico = false;
   } else {
     cardRetrabajo.style.display = 'block'; cardMaquina.style.display = 'block';
     if (E.maquina === 'N/A') E.maquina = '';
-    if (cod === 'OP') mostrarCampoAuto(E.maquinaAutomatico);
-    else {
-      document.getElementById('campo-automatico').classList.remove('visible');
+    if (cod === 'OP') {
+      mostrarCampoAuto(E.maquinaAutomatico);
+    } else {
+      cardAuto.classList.remove('visible');
       document.getElementById('campo-hora-fin-maq').classList.remove('visible');
+      document.getElementById('btn-automatico').classList.remove('activo');
       E.automatico = false;
     }
   }
@@ -974,22 +981,25 @@ function selMaq(btn, maqNombre, esAutomatico) {
 }
 
 function mostrarCampoAuto(esAutomatico) {
-  var campo = document.getElementById('campo-automatico');
-  if (esAutomatico && E.actividad === 'OP') campo.classList.add('visible');
-  else {
-    campo.classList.remove('visible');
+  var cardAuto = document.getElementById('card-automatico');
+  if (esAutomatico && E.actividad === 'OP') {
+    cardAuto.classList.add('visible');
+  } else {
+    cardAuto.classList.remove('visible');
     document.getElementById('campo-hora-fin-maq').classList.remove('visible');
     document.getElementById('f-hora-fin-maquina').value = '';
     document.getElementById('f-fecha-fin-maquina').value = '';
+    document.getElementById('btn-automatico').classList.remove('activo');
     E.automatico = false;
   }
 }
 
-function selAuto(btn, esAuto) {
-  document.querySelectorAll('#campo-automatico .sel-btn').forEach(function(b) { b.classList.remove('activo'); });
-  btn.classList.add('activo'); E.automatico = esAuto;
+// Toggle automático — igual que retrabajo y última actividad
+function selAutomatico(btn) {
+  E.automatico = !E.automatico;
+  btn.classList.toggle('activo', E.automatico);
   var campo = document.getElementById('campo-hora-fin-maq');
-  if (esAuto) {
+  if (E.automatico) {
     campo.classList.add('visible');
     if (!document.getElementById('f-fecha-fin-maquina').value) {
       var hoy = new Date();
@@ -1003,7 +1013,6 @@ function selAuto(btn, esAuto) {
   }
 }
 
-// Última actividad — funciona igual que retrabajo (toggle)
 function selUltimo(btn) {
   E.esUltimo = !E.esUltimo;
   btn.classList.toggle('activo', E.esUltimo);
@@ -1285,7 +1294,6 @@ function mostrarPantalla(id) {
   document.getElementById(id).classList.add('activa');
   window.scrollTo(0,0);
 }
-
 function diffMinutos(desde, hasta) {
   if (!desde || !hasta) return 0;
   var d = desde.split(':').map(Number);
@@ -1293,13 +1301,11 @@ function diffMinutos(desde, hasta) {
   var diff = (h[0]*60+h[1]) - (d[0]*60+d[1]);
   return diff > 0 ? diff : 0;
 }
-
 function minAHora(min) {
   if (!min || min <= 0) return '0min';
   if (min < 60) return min + 'min';
   return Math.floor(min/60) + 'h ' + (min%60 > 0 ? (min%60) + 'min' : '');
 }
-
 function formatFecha(fecha) {
   var p = fecha.split('-');
   var dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
@@ -1307,7 +1313,6 @@ function formatFecha(fecha) {
   return dias[d.getDay()] + ' ' + p[2] + '/' + p[1] + '/' + p[0];
 }
 
-// Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('/service-worker.js')
